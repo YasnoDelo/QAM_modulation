@@ -131,31 +131,27 @@ public:
 
     QAMDemodulator(ModulationType modulation_type) : modulation_type(modulation_type) {}
 
-    int demodulate(double in_phase, double quadrature) {
-        int max_bits = get_max_bits();
+    // Метод демодуляции сигнала
+    int demodulate(int in_phase, int quadrature) {
+        int max_bits = get_max_bits(); // Получаем максимальное количество бит для текущего типа модуляции
 
-        int inted_in_phase   = nearest_odd(in_phase);
-        int inted_quadrature = nearest_odd(quadrature);
+        // Корректируем значения in_phase и quadrature
+        in_phase -= pow2(max_bits + 1);
+        quadrature -= pow2(max_bits + 1);
 
-        std::cout<< "quadrature = " << quadrature << std::endl;
-        std::cout<< "in_phase = " << in_phase << std::endl;
-
-        std::cout<< "inted_quadrature = " << inted_quadrature << std::endl;
-        std::cout<< "inted_in_phase = " << inted_in_phase << std::endl;
-
-        inted_in_phase   -= pow2(max_bits + 1);
-        inted_quadrature -= pow2(max_bits + 1);
-
-        return demodulation(inted_in_phase, inted_quadrature, max_bits);
+        // Демодулируем сигнал
+        return demodulation(in_phase, quadrature, max_bits);
     }
 
 private:
     ModulationType modulation_type;
 
+    // Метод вычисления степени двойки
     int pow2(int pow) {
         return 1 << pow;
     }
 
+    // Метод получения максимального количества бит для текущего типа модуляции
     int get_max_bits() {
         switch (modulation_type) {
             case ModulationType::QPSK:
@@ -165,34 +161,38 @@ private:
             case ModulationType::QAM64:
                 return 2;
             default:
-                return 0;
+                return 0; // По умолчанию возвращаем 0 для безопасности
         }
     }
 
+    // Метод демодуляции для каждого типа модуляции
     int demodulation(int in_phase, int quadrature, int max_bits) {
         int bit = 0;
-        for (int bit_idx = max_bits; bit_idx >= 0; bit_idx--) {
+
+        // Проверяем каждый бит
+        for(int bit_idx = max_bits; bit_idx >= 0; bit_idx--) {
+            // Проверяем, укладывается ли значение in_phase в пороговое значение
             if (std::abs(in_phase) < pow2(bit_idx + 1)) {
                 bit |= 1 << bit_idx + max_bits + 1;
             }
+
+            // Проверяем, укладывается ли значение quadrature в пороговое значение
             if (std::abs(quadrature) < pow2(bit_idx + 1)) {
                 bit |= 1 << bit_idx;
             }
+
+            // Корректируем значения in_phase и quadrature
             in_phase = adjust_value(in_phase, pow2(bit_idx + 1));
             quadrature = adjust_value(quadrature, pow2(bit_idx + 1));
         }
+
         return bit;
     }
 
+    // Метод для коррекции значения с учетом знака
     int adjust_value(int val, int step) {
         return (val >= 0) ? val - step : val + step;
     }
-
-    int nearest_odd(double val) {
-        int nearest_int = static_cast<int>(val);
-        return (nearest_int % 2) ? nearest_int :  nearest_int + 1;
-    }
-
 };
 
 int main() {
@@ -226,7 +226,6 @@ int main() {
         int bit = qam16_demodulator.demodulate(in_phase_values[i], quadrature_values[i]);
         std::cout << "InPhase: " << in_phase_values[i] << ", Quadrature: " << quadrature_values[i] << ", Bit: " << bit << std::endl;
     }
-    
     qam64Modulator.print_map();
     std::cout << "#######################################" <<  std::endl;
 
@@ -236,7 +235,5 @@ int main() {
         std::cout << "InPhase: " << in_phase_values[i] << ", Quadrature: " << quadrature_values[i] << ", Bit: " << bit << std::endl;
     }
 
-    int bit = qpsk_demodulator.demodulate(1.3, -1.2);
-
-    std::cout<< "bit = " << bit << std::endl;
+    return 0;
 }
