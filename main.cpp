@@ -188,9 +188,13 @@ private:
         return (val >= 0) ? val - step : val + step;
     }
 
+    int sgn(double val) {
+        return (val < 0) ? -1 : 1;
+    }
+
     int nearest_odd(double val) {
         int nearest_int = static_cast<int>(val);
-        return (nearest_int % 2) ? nearest_int :  nearest_int + 1;
+        return (nearest_int % 2) ? nearest_int :  nearest_int + sgn(val);
     }
 
 };
@@ -198,7 +202,7 @@ private:
 int main() {
     QAMModulator qam64Modulator(QAMModulator::ModulationType::QAM64);
     QAMModulator qam16Modulator(QAMModulator::ModulationType::QAM16);
-    QAMModulator qam2Modulator(QAMModulator::ModulationType::QPSK);
+    QAMModulator qpskModulator(QAMModulator::ModulationType::QPSK);
 
     QAMDemodulator qpsk_demodulator(QAMDemodulator::ModulationType::QPSK);
     QAMDemodulator qam16_demodulator(QAMDemodulator::ModulationType::QAM16);
@@ -208,35 +212,37 @@ int main() {
     int in_phase_values[] = {-1, 1, -1, 1};
     int quadrature_values[] = {-1, 1, 1, -1};
 
-    qam2Modulator.print_map();
+    qpskModulator.print_map();
     std::cout << "#######################################" <<  std::endl;
-
+/*
     // Тестирование для каждого типа модуляции
     std::cout << "QPSK Demodulation:" << std::endl;
     for (int i = 0; i < sizeof(in_phase_values) / sizeof(in_phase_values[0]); ++i) {
         int bit = qpsk_demodulator.demodulate(in_phase_values[i], quadrature_values[i]);
         std::cout << "InPhase: " << in_phase_values[i] << ", Quadrature: " << quadrature_values[i] << ", Bit: " << bit << std::endl;
-    }
+    }*/
 
     qam16Modulator.print_map();
     std::cout << "#######################################" <<  std::endl;
 
-    std::cout << "\nQAM16 Demodulation:" << std::endl;
+    /*std::cout << "\nQAM16 Demodulation:" << std::endl;
     for (int i = 0; i < sizeof(in_phase_values) / sizeof(in_phase_values[0]); ++i) {
         int bit = qam16_demodulator.demodulate(in_phase_values[i], quadrature_values[i]);
         std::cout << "InPhase: " << in_phase_values[i] << ", Quadrature: " << quadrature_values[i] << ", Bit: " << bit << std::endl;
-    }
+    }*/
     
     qam64Modulator.print_map();
     std::cout << "#######################################" <<  std::endl;
 
-    std::cout << "\nQAM64 Demodulation:" << std::endl;
+    /*std::cout << "\nQAM64 Demodulation:" << std::endl;
     for (int i = 0; i < sizeof(in_phase_values) / sizeof(in_phase_values[0]); ++i) {
         int bit = qam64_demodulator.demodulate(in_phase_values[i], quadrature_values[i]);
         std::cout << "InPhase: " << in_phase_values[i] << ", Quadrature: " << quadrature_values[i] << ", Bit: " << bit << std::endl;
-    }
+    }*/
 
-    int bit = qpsk_demodulator.demodulate(1.3, -1.2);
+    int bit = 0;
 
+    bit = qam64_demodulator.demodulate(-8 + 0.5, -8 + 0.5);
     std::cout<< "bit = " << bit << std::endl;
+
 }
