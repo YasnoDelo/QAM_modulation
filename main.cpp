@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <random>
 
 class QAMModulator {
 public:
@@ -199,8 +200,28 @@ private:
 
 };
 
+class QAMChannel {
+public:
+    QAMChannel(double noise_stddeviation) : noise_stddeviation(noise_stddeviation) {}
+
+    void addNoise(double& in_phase, double& quadrature) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::normal_distribution<> d(0, noise_stddeviation);
+
+        double noise_in_phase = d(gen);
+        double noise_quadrature = d(gen);
+
+        in_phase += noise_in_phase;
+        quadrature += noise_quadrature;
+    }
+
+private:
+    double noise_stddeviation;
+};
+
 int main() {
-    QAMModulator qam64Modulator(QAMModulator::ModulationType::QAM64);
+    /*QAMModulator qam64Modulator(QAMModulator::ModulationType::QAM64);
     QAMModulator qam16Modulator(QAMModulator::ModulationType::QAM16);
     QAMModulator qpskModulator(QAMModulator::ModulationType::QPSK);
 
@@ -214,13 +235,13 @@ int main() {
 
     qpskModulator.print_map();
     std::cout << "#######################################" <<  std::endl;
-/*
+    /*
     // Тестирование для каждого типа модуляции
     std::cout << "QPSK Demodulation:" << std::endl;
     for (int i = 0; i < sizeof(in_phase_values) / sizeof(in_phase_values[0]); ++i) {
         int bit = qpsk_demodulator.demodulate(in_phase_values[i], quadrature_values[i]);
         std::cout << "InPhase: " << in_phase_values[i] << ", Quadrature: " << quadrature_values[i] << ", Bit: " << bit << std::endl;
-    }*/
+    }
 
     qam16Modulator.print_map();
     std::cout << "#######################################" <<  std::endl;
@@ -229,7 +250,7 @@ int main() {
     for (int i = 0; i < sizeof(in_phase_values) / sizeof(in_phase_values[0]); ++i) {
         int bit = qam16_demodulator.demodulate(in_phase_values[i], quadrature_values[i]);
         std::cout << "InPhase: " << in_phase_values[i] << ", Quadrature: " << quadrature_values[i] << ", Bit: " << bit << std::endl;
-    }*/
+    }
     
     qam64Modulator.print_map();
     std::cout << "#######################################" <<  std::endl;
@@ -238,11 +259,31 @@ int main() {
     for (int i = 0; i < sizeof(in_phase_values) / sizeof(in_phase_values[0]); ++i) {
         int bit = qam64_demodulator.demodulate(in_phase_values[i], quadrature_values[i]);
         std::cout << "InPhase: " << in_phase_values[i] << ", Quadrature: " << quadrature_values[i] << ", Bit: " << bit << std::endl;
-    }*/
+    }
 
     int bit = 0;
 
     bit = qam64_demodulator.demodulate(-8 + 0.5, -8 + 0.5);
-    std::cout<< "bit = " << bit << std::endl;
+    std::cout<< "bit = " << bit << std::endl;*/
+
+    QAMChannel channel(0.8); // Assuming noise standard deviation is 0.1
+    QAMModulator modulator(QAMModulator::ModulationType::QAM16);
+    QAMDemodulator demodulator(QAMDemodulator::ModulationType::QAM16);
+
+    // Test modulate and print_map
+    std::cout << "Modulated signal map:" << std::endl;
+    modulator.print_map();
+
+    // Test demodulate
+    double in_phase = -3.0; // Sample in-phase value after modulation
+    double quadrature = -3.0; // Sample quadrature value after modulation
+    channel.addNoise(in_phase, quadrature);
+    std::cout << "In-phase after adding noise: " << in_phase << std::endl;
+    std::cout << "Quadrature after adding noise: " << quadrature << std::endl;
+
+    int demodulated_bit = demodulator.demodulate(in_phase, quadrature);
+    std::cout << "Demodulated bit: " << demodulated_bit << std::endl;
+
+    return 0;
 
 }
