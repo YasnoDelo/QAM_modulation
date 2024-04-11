@@ -1,6 +1,11 @@
 #include <iostream>
 #include <cmath>
 #include <random>
+#include <fstream>
+#include <cstdlib>
+#include <sstream>
+#include <string>
+#include <iomanip>
 
 #define check(condition)                                                                                                                 \
     if (!(condition))                                                                                                                                \
@@ -410,61 +415,261 @@ private:
     double noise_stddeviation;
 };
 
-class py_make {
-public:
-    py_make() = default;
-
+class PythonFileCreator {
 private:
-    
+
+public:
+    PythonFileCreator() = default;
+
+    std::string double_array_to_string(double* arr, int array_size) {
+        std::stringstream ss;
+        for (int i = 0; i < array_size; ++i) {
+            if(i == array_size -1){
+                ss << arr[i];
+                break;
+            }
+            ss << arr[i] << ", ";
+        }
+        return ss.str();
+    }
+
+    void add_lines_to_python_file(const std::string& filename, const std::string& string) {
+        std::ofstream outfile(filename, std::ios::app);
+        if (outfile.is_open()) {
+            outfile << string;
+            outfile.close();
+            std::cout << "Lines added to Python file '" << filename << "' successfully.\n";
+        } else {
+            std::cerr << "Unable to open Python file.\n";
+        }
+    }
+
+    void clear_file_content(const std::string& filename) {
+        std::ofstream outfile(filename, std::ios::trunc);
+        if (outfile.is_open()) {
+            outfile.close();
+            std::cout << "Content of file '" << filename << "' cleared successfully.\n";
+        } else {
+            std::cerr << "Unable to clear content of file.\n";
+        }
+    }
 };
 
 int main() {
+    
+    const std::string filename = "output.py";
+    PythonFileCreator file_ctor;
     QAMChannel channel;
-    QAMModulator modulator(QAMModulator::ModulationType::QPSK);
-    QAMDemodulator demodulator(QAMDemodulator::ModulationType::QPSK);
+    QAMModulator modulator_2(QAMModulator::ModulationType::QPSK);
+    QAMDemodulator demodulator_2(QAMDemodulator::ModulationType::QPSK);
+
+    QAMModulator modulator_16(QAMModulator::ModulationType::QAM16);
+    QAMDemodulator demodulator_16(QAMDemodulator::ModulationType::QAM16);
+
+    QAMModulator modulator_64(QAMModulator::ModulationType::QAM64);
+    QAMDemodulator demodulator_64(QAMDemodulator::ModulationType::QAM64);
 
     // Test modulate and print_map
-    std::cout << "Modulated signal map:" << std::endl;
-    modulator.print_map();
+    //std::cout << "Modulated signal map:" << std::endl;
+    //modulator.print_map();
+
+    int amount = 0;
+    int misses = 0;
+    int max_co = 10000;
+    int points = 90;
+
+    double sum = 0.0;
 
     int* arr_bit         = 0;
     int* demodulated_arr = 0;
     Signal* signal_arr   = 0;
-    
-    int amount = 0;
-    int misses = 0;
-    int max    = 10000;
 
-    double sum = 0.0;
-    double ave = 0.0;
-    double dev = 0.1;
+    double* dev = (double*)calloc(points, sizeof(double));
+    double* ave = (double*)calloc(points, sizeof(double));
+    hard_check(ave != 0);
+    hard_check(dev != 0);
 
-    for(; dev < 2.5; dev += 0.1) {
-        for (int i = 0; i < max; i++) {
-            amount = modulator.rand_bits_modulate(arr_bit, signal_arr);
+    for (int co = 1; co < points; co++)
+    {
+        dev[co] = 0.05*co;
+    }
+
+    std::cout << "QPSK:" << std::endl;
+
+    for(int out_co = 0; out_co < points; out_co++) {
+
+        sum = 0.0;
+
+        for (int in_co = 0; in_co < max_co; in_co++) {
+            amount = modulator_2.rand_bits_modulate(arr_bit, signal_arr);
             check(arr_bit    != 0);
             check(signal_arr != 0);
             check(amount     != 0);
             //Теперь в arr_bit изначальный набор битов, в signal_arr - модулированный сигнал
 
-            channel.add_noise_arr(signal_arr, dev, amount);
+            channel.add_noise_arr(signal_arr, dev[out_co], amount);
             //Теперь в arr_bit изначальный набор битов, в signal_arr - модулированный сигнал с гауссовским шумом
 
-            demodulated_arr = demodulator.demodulate_arr(signal_arr);
-            misses =  demodulator.bit_check(arr_bit, demodulated_arr, amount);
+            demodulated_arr = demodulator_2.demodulate_arr(signal_arr);
+            misses =  demodulator_2.bit_check(arr_bit, demodulated_arr, amount);
             sum += misses;
 
             //std::cout << "Amount of misses: " << misses << std::endl;
         }
 
-        ave = sum/((double)max);
+        ave[out_co] = sum/((double)max_co);
 
-        std::cout << "dev = " << dev << "   ave = " << ave << std::endl;
+        std::cout << "dev = " << dev[out_co] << "   ave = " << ave[out_co] << std::endl;
     }
+
+    std::string qpsk_arr = file_ctor.double_array_to_string(ave, points);
+    std::string dev_arr  = file_ctor.double_array_to_string(dev, points);
+
+    std::cout << "QAM16:" << std::endl;
+
+    for(int out_co = 0; out_co < points; out_co++) {
+
+        sum = 0.0;
+
+        for (int in_co = 0; in_co < max_co; in_co++) {
+            amount = modulator_16.rand_bits_modulate(arr_bit, signal_arr);
+            check(arr_bit    != 0);
+            check(signal_arr != 0);
+            check(amount     != 0);
+            //Теперь в arr_bit изначальный набор битов, в signal_arr - модулированный сигнал
+
+            channel.add_noise_arr(signal_arr, dev[out_co], amount);
+            //Теперь в arr_bit изначальный набор битов, в signal_arr - модулированный сигнал с гауссовским шумом
+
+            demodulated_arr = demodulator_16.demodulate_arr(signal_arr);
+            misses =  demodulator_16.bit_check(arr_bit, demodulated_arr, amount);
+            sum += misses;
+
+            //std::cout << "Amount of misses: " << misses << std::endl;
+        }
+
+        ave[out_co] = sum/((double)max_co);
+
+        std::cout << "dev = " << dev[out_co] << "   ave = " << ave[out_co] << std::endl;
+    }
+
+    std::string qam16_arr = file_ctor.double_array_to_string(ave, points);
+
+    std::cout << "QAM64:" << std::endl;
+
+    for(int out_co = 0; out_co < points; out_co++) {
+
+        sum = 0.0;
+
+        for (int in_co = 0; in_co < max_co; in_co++) {
+            amount = modulator_64.rand_bits_modulate(arr_bit, signal_arr);
+            check(arr_bit    != 0);
+            check(signal_arr != 0);
+            check(amount     != 0);
+            //Теперь в arr_bit изначальный набор битов, в signal_arr - модулированный сигнал
+
+            channel.add_noise_arr(signal_arr, dev[out_co], amount);
+            //Теперь в arr_bit изначальный набор битов, в signal_arr - модулированный сигнал с гауссовским шумом
+
+            demodulated_arr = demodulator_64.demodulate_arr(signal_arr);
+            misses =  demodulator_64.bit_check(arr_bit, demodulated_arr, amount);
+            sum += misses;
+
+            //std::cout << "Amount of misses: " << misses << std::endl;
+        }
+
+        ave[out_co] = sum/((double)max_co);
+
+        std::cout << "dev = " << dev[out_co] << "   ave = " << ave[out_co] << std::endl;
+    }
+
+    std::string qam64_arr = file_ctor.double_array_to_string(ave, points);
+
+    std::string intro = R"(import numpy as np
+import matplotlib.pyplot as plt
+
+class merge:
+    def __init__(self, k, b):
+        self.k = k
+        self.b = b
+
+def linearize(x_arr, y_arr):
+
+    print(x_arr)
+    print(y_arr)
+
+    k = ((x_arr*y_arr).mean() - x_arr.mean()*y_arr.mean())/((x_arr**2).mean() - (x_arr.mean())**2)
+    b = y_arr.mean() - k*x_arr.mean()
+    sigma_k = (1/np.sqrt(len(x_arr)))*np.sqrt(((y_arr**2).mean() - (y_arr.mean())**2)/((x_arr**2).mean() - (x_arr.mean())**2) - k**2)
+    sigma_b = sigma_k*np.sqrt((x_arr**2).mean() - (x_arr.mean())**2)
+
+    print("k = ", k, "+-", sigma_k,)
+    print("b = ", b, "+-", sigma_b)
+
+    return merge(k, b)
+
+missed_qpsk     = np.array([)";
+
+    std::string after_qpsk = R"(])
+missed_qam16    = np.array([)";
+
+    std::string after_qam16 = R"(])
+missed_qam64    = np.array([)";
+
+    std::string after_qam64 = R"(])
+
+diviation = np.array([)";
+
+    std::string end = R"(])
+
+print(diviation)
+print(missed_qpsk)
+print(missed_qam16)
+print(missed_qam64)
+
+koefs_qpsk  = linearize(diviation, missed_qpsk)
+koefs_qam16 = linearize(diviation, missed_qam16)
+koefs_qam64 = linearize(diviation, missed_qam64)
+
+plt.ylabel(r"missed bits") # подписи к осям
+plt.xlabel(r"diviation")
+plt.title(r'Зависимость количесва утеряных бит от дисперсии шума') # заголовок
+plt.grid(True) # сетка
+
+X = np.arange(0, 4)
+
+plt.plot(X, koefs_qpsk.k*X + koefs_qpsk.b,linewidth=2, label='QPSK', color='red')
+plt.plot(diviation, missed_qpsk, '+')
+
+plt.plot(X, koefs_qam16.k*X + koefs_qam16.b,linewidth=2, label='QAM16', color='blue')
+plt.plot(diviation, missed_qam16, 'o')
+
+plt.plot(X, koefs_qam64.k*X + koefs_qam64.b,linewidth=2, label='QAM64', color='black')
+plt.plot(diviation, missed_qam64, 'x')
+
+plt.legend()
+plt.show()
+    )";
+
+    file_ctor.clear_file_content(filename);
+
+    file_ctor.add_lines_to_python_file(filename, intro);
+    file_ctor.add_lines_to_python_file(filename, qpsk_arr);
+    file_ctor.add_lines_to_python_file(filename, after_qpsk);
+    file_ctor.add_lines_to_python_file(filename, qam16_arr);
+    file_ctor.add_lines_to_python_file(filename, after_qam16);
+    file_ctor.add_lines_to_python_file(filename, qam64_arr);
+    file_ctor.add_lines_to_python_file(filename, after_qam64);
+    file_ctor.add_lines_to_python_file(filename, dev_arr);
+    file_ctor.add_lines_to_python_file(filename, end);
 
     free(demodulated_arr);
     free(signal_arr);
     free(arr_bit);
+    free(dev);
+    free(ave);
+
+    system("python3 output.py");
 
     return 0;
 
