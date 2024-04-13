@@ -36,8 +36,8 @@
 #define QAM16_shft 2;
 #define QAM64_shft 3;
 
-#define ACCUR 10000;    //Than more this number - than mor will be value on the graph
-#define POINTS 90;      //Amount of points on the graph
+#define ACCUR  10000;    //Than more this number - than mor will be value on the graph
+#define POINTS     90;   //Amount of points on the graph
 
 void full_py_beg(PythonFileCreator& file_ctor, const std::string filename);
 

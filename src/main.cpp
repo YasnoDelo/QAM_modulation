@@ -25,9 +25,10 @@ int main() {
     QAMModulator modulator_64(QAMModulator::ModulationType::QAM64);
     QAMDemodulator demodulator_64(QAMDemodulator::ModulationType::QAM64);
     test_modulation(modulator_64, demodulator_64, "QAM64", file_ctor, channel, filename);
-    file_ctor.add_lines_to_python_file(filename, after_qam64);
 
     full_py_end(file_ctor, filename);
+
+    system("python3 output.py");
 
     return 0;
 }

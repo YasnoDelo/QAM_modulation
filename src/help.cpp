@@ -1,5 +1,8 @@
 #include "../include/help.h"
 
+std::string after_dev = R"(])
+missed_qpsk  = np.array([)";
+
 void full_py_beg(PythonFileCreator& file_ctor, const std::string filename) {
     std::string intro = R"(import numpy as np
 import matplotlib.pyplot as plt
@@ -19,7 +22,7 @@ print(missed_qpsk)
 print(missed_qam16)
 print(missed_qam64)
 
-plt.ylabel(r"missed bits") # подписи к осям
+plt.ylabel(r"probability of missing on 1 bit") # подписи к осям
 plt.xlabel(r"diviation")
 plt.title(r'Зависимость количесва утеряных бит от дисперсии шума') # заголовок
 plt.grid(True) # сетка
@@ -43,6 +46,8 @@ void test_modulation(QAMModulator& modulator, QAMDemodulator& demodulator, const
 
     double sum = 0.0;
 
+    static int status = 0;
+
     int misses = 0;
     int max_co = ACCUR;
     int points = POINTS;
@@ -58,6 +63,14 @@ void test_modulation(QAMModulator& modulator, QAMDemodulator& demodulator, const
 
     for (int co = 1; co < points; co++) {
         dev[co] = 0.05*co;
+    }
+
+    if (!status)
+    {
+        std::string dev_arr = file_ctor.double_array_to_string(dev, points);
+        file_ctor.add_lines_to_python_file(filename, dev_arr);
+        file_ctor.add_lines_to_python_file(filename, after_dev);
+        status++;
     }
 
     for(int out_co = 0; out_co < points; out_co++) {
