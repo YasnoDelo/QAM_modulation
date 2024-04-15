@@ -37,12 +37,14 @@
 #define QAM64_shft 3;
 
 #define ACCUR  10000;    //Than more this number - than mor will be value on the graph
-#define POINTS     90;   //Amount of points on the graph
+#define POINTS    90;   //Amount of points on the graph
 
 void full_py_beg(PythonFileCreator& file_ctor, const std::string filename);
 
 void full_py_end(PythonFileCreator& file_ctor, const std::string filename);
 
 void test_modulation(QAMModulator& modulator, QAMDemodulator& demodulator, const std::string& modulation_name, PythonFileCreator& file_ctor, QAMChannel& channel, const std::string& filename);
+
+double aver_sq_find(Signal* signal_arr, int amount);
 
 #endif
