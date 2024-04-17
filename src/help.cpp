@@ -117,7 +117,7 @@ void test_modulation(QAMModulator& modulator, QAMDemodulator& demodulator, const
         }
 
         ave[out_co] = sum/((double)max_co * (double)test_info.amount * (double)test_info.bit_in_word);
-        SNR[out_co] = 20 * log((((double)test_info.amount) * aver_quadr) / (dev[out_co] * dev[out_co]));
+        SNR[out_co] = 10 * log10((((double)test_info.amount) * aver_quadr) / (8 * dev[out_co] * dev[out_co]));
 
         std::cout.setf(std::ios::fixed);
         std::cout.precision(2); //2 - число символов после точки
